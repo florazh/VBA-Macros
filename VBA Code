@@ -1,0 +1,541 @@
+Dim wb As Workbook 
+
+Dim wsData As Worksheet, wsPT As Worksheet 
+
+  
+
+Sub create_pivot_table_and_chart() 
+
+  
+
+Dim Message As String 
+
+Dim Input_box, YNAnswer As Integer 
+
+  
+
+Dim LastRow As Long, LastColumn As Long 
+
+Dim DataRange As Range 
+
+Dim PTCache As PivotCache 
+
+Dim pt As PivotTable 
+
+Dim wb As Workbook 
+
+Dim wsData As Worksheet, wsPT As Worksheet 
+
+  
+
+'Call Input_box_message 
+
+  
+
+Message = "Enter the graph of your choice:" & vbCrLf & _ 
+
+"1 - Line Graph" & vbCrLf & _ 
+
+"2 - Pie Chart" & vbCrLf & _ 
+
+"3 - Multi-Line Graph" 
+
+  
+
+Input_box = InputBox(Message, "Graph", "Enter 1, 2, or 3") 
+
+  
+
+'Delete any existing worksheets 
+
+Call delete_worksheets 
+
+  
+
+Set wb = ActiveWorkbook 
+
+  
+
+Set wsData = ActiveWorkbook.ActiveSheet 'set to active worksheet, not a named ws (so works with any sheet name) 
+
+  
+
+With wsData 
+
+    LastRow = .Cells(Rows.Count, "A").End(xlUp).Row 
+
+    LastColumn = .Cells(1, Columns.Count).End(xlToLeft).Column 
+
+     
+
+    Set DataRange = Range(.Cells(1, 1), .Cells(LastRow, LastColumn)) 
+
+     
+
+     
+
+    Set wsPT = wb.Worksheets.Add 
+
+    wsPT.Name = "Pivot Table" 
+
+     
+
+    'create Pivot Table 
+
+    Set PTCache = wb.PivotCaches.Create(xlDatabase, DataRange) 
+
+     
+
+    Set pt = PTCache.CreatePivotTable(wsPT.Range("A5"), "PT_analysis") 
+
+     
+
+    With pt 
+
+     
+
+        'Pivot table layout settings 
+
+        '.RowAxisLayout xlTabularRow 
+
+        .ColumnGrand = True 'display grand total for each column 
+
+        .RowGrand = True 'display grand total at row level 
+
+         
+
+        '.TableStyle2 = "PivotStyleMedium9" 'set table colors 
+
+        .HasAutoFormat = False 'when autosize columns, format numbers when refresh pivot 
+
+        .SubtotalLocation xlAtTop 'display subtotals at top 
+
+         
+
+        'There's 4 fields of a pivot table: filter, values, row, column 
+
+        'Let's edit them 
+
+         
+
+         
+
+        If Input_box = 1 Then 
+
+        'Row 
+
+             With .PivotFields("Created") 
+
+                .Orientation = xlRowField    'add "name" as a row. Specify orientation first 
+
+                .Position = 1 'since we'll do a layered 
+
+                .LayoutBlankLine = False 'if have blank row, will take not take into acct 
+
+                .AutoGroup 
+
+             
+
+            'some settings 
+
+            '.Subtotals(1) = True 'see subtotals of row layer 1 
+
+                .LayoutForm = xlCompact 'xlOutline 
+
+                .LayoutCompactRow = True 
+
+            End With 
+
+         
+
+        'Values setion: will do a sum, count, etc. of value field 
+
+            With .PivotFields("Incident #") 
+
+                .Orientation = xlDataField 'add as value 
+
+                .Position = 1 
+
+                .Function = xlCount 'so sum the values 
+
+            '.NumberFormat = "$#,##;(#,##);-" 
+
+                .Caption = "Count of Incidents" 
+
+            End With 
+
+             
+
+        Call change_col_name 
+
+  
+
+        wsPT.Cells.EntireColumn.AutoFit 
+
+         
+
+        ElseIf Input_box = 2 Then 
+
+                 
+
+        'Row 
+
+            With .PivotFields("Offering") 
+
+                .Orientation = xlRowField    'add "name" as a row. Specify orientation first 
+
+                .Position = 1 'since we'll do a layered 
+
+                .LayoutBlankLine = False 'if have blank row, will take not take into acct 
+
+                .Caption = "Offering"  'changes the pivot object name, not the col title 
+
+            'some settings 
+
+            '.Subtotals(1) = True 'see subtotals of row layer 1 
+
+                .LayoutForm = xlCompact 'xlOutline 
+
+            '.LayoutCompactRow = True 
+
+            End With 
+
+                 
+
+        'Values setion: will do a sum, count, etc. of value field 
+
+            With .PivotFields("Offering") 
+
+                .Orientation = xlDataField 'add as value 
+
+                .Position = 1 
+
+                .Function = xlCount 'so sum the values 
+
+        '    .NumberFormat = "$#,##;(#,##);-" 
+
+                .Caption = "Count of Offering" 
+
+            End With 
+
+  
+
+  
+
+            ActiveSheet.PivotTables("PT_analysis").PivotFields("Offering").AutoSort _ 
+
+                xlDescending, "Count of Offering" 
+
+  
+
+                 
+
+        ElseIf Input_box = 3 Then 
+
+                 
+
+            'Row 
+
+            With .PivotFields("Created") 
+
+                .Orientation = xlRowField    'add "name" as a row. Specify orientation first 
+
+                .Position = 1 'since we'll do a layered 
+
+                .LayoutBlankLine = False 'if have blank row, will take not take into acct 
+
+                .Caption = "Offering"  'changes the pivot object name, not the col title 
+
+            'some settings 
+
+                .Subtotals(1) = True 'see subtotals of row layer 1 
+
+                .LayoutForm = xlCompact 'xlOutline 
+
+                '.LayoutCompactRow = True 
+
+                .AutoGroup 
+
+            End With 
+
+  
+
+         
+
+            With .PivotFields("Type") 
+
+                .Orientation = xlColumnField    'add "name" as a row. Specify orientation first 
+
+                .Position = 1 'since we'll do a layered 
+
+                .LayoutBlankLine = False 'if have blank row, will take not take into acct 
+
+                .Caption = "Type"  'changes the pivot object name, not the col title 
+
+                'some settings 
+
+                '.Subtotals(1) = True 'see subtotals of row layer 1 
+
+                .LayoutForm = xlCompact 'xlOutline 
+
+                '.LayoutCompactRow = True 
+
+            End With 
+
+         
+
+         
+
+        'Values setion: will do a sum, count, etc. of value field 
+
+            With .PivotFields("Type") 
+
+                .Orientation = xlDataField 'add as value 
+
+                .Position = 1 
+
+                .Function = xlCount 'so sum the values 
+
+        '       .NumberFormat = "$#,##;(#,##);-" 
+
+                .Caption = "Count of Type" 
+
+            End With 
+
+             
+
+        Else 
+
+            YNAnswer = MsgBox("Oops! You didn't type a valid option. Try again?", vbYesNo) 
+
+            If YNAnswer = vbYes Then 
+
+                Call create_pivot_table 
+
+            End If 
+
+  
+
+        End If 
+
+     
+
+    End With 
+
+  
+
+End With 
+
+  
+
+  
+
+'Release object memories 
+
+Set pt = Nothing 
+
+Set PTCache = Nothing 
+
+Set wsPT = Nothing 
+
+Set DataRange = Nothing 
+
+Set wsData = Nothing 
+
+Set wb = Nothing 
+
+         
+
+Create_Generic_Chart (Input_box) 
+
+  
+
+End Sub 
+
+  
+
+  
+
+Public Sub change_col_name() 
+
+'change title of 1st col 
+
+Sheets("Pivot Table").Select 
+
+Range("A1").Select 
+
+Selection.End(xlDown).Select 
+
+Selection.Value = "Date" 
+
+  
+
+End Sub 
+
+  
+
+Sub Create_Generic_Chart(Input_box As Integer) 
+
+  
+
+    Dim sh As Shape 
+
+    Dim ws As Worksheet 
+
+    Dim ch As Chart 
+
+    Dim pt As PivotTable 
+
+    Dim FileOnly As String 
+
+     
+
+    Set ws = Worksheets("Pivot Table") 
+
+  
+
+    Select Case Input_box 
+
+        Case 1                          'line 
+
+            Set sh = ws.Shapes.AddChart2( _ 
+
+                     XlChartType:=xlLine, _ 
+
+                    Width:=500, Height:=400) 
+
+  
+
+             
+
+        Case 2                          'pie 
+
+            Set sh = ws.Shapes.AddChart2( _ 
+
+                XlChartType:=xlDoughnut, _ 
+
+                    Width:=400, Height:=400) 
+
+              
+
+             Set ch = sh.Chart 
+
+     
+
+            ch.DoughnutGroups(1).DoughnutHoleSize = 50 
+
+     
+
+      
+
+  
+
+        Case 3                          'multi-line 
+
+             Set sh = ws.Shapes.AddChart2( _ 
+
+                    XlChartType:=xlLine, _ 
+
+                    Width:=500, Height:=400) 
+
+            
+
+        End Select 
+
+     
+
+    Set ch = sh.Chart 
+
+    Set pt = ws.PivotTables(1) 
+
+     
+
+    sh.Top = pt.TableRange1.Top 
+
+            sh.Left = pt.TableRange1.Left + pt.TableRange1.Width + 50 
+
+     
+
+     
+
+    'format 
+
+  
+
+Title = " 'Date " & Chr(10) & "Graph Description" _ 
+
+& Chr(10) & "Assigned to' " 
+
+  
+
+  
+
+With ch 
+
+    .HasTitle = True 
+
+    .ChartTitle.Text = Title 
+
+    .SetSourceData pt.TableRange1 
+
+'   .ClearToMatchStyle 
+
+'   .ChartStyle = 227 
+
+  '  .SetElement (msoElementLegendNone) 
+
+  
+
+End With 
+
+  
+
+     
+
+End Sub 
+
+  
+
+  
+
+Private Sub delete_worksheets() 
+
+  
+
+For Each Sheet In ActiveWorkbook.Worksheets 
+
+    If Sheet.Name = "Pivot Table" Then 
+
+        Application.DisplayAlerts = False 
+
+        Worksheets("Pivot Table").Delete 
+
+        Application.DisplayAlerts = True 
+
+    End If 
+
+Next Sheet 
+
+  
+
+End Sub 
+
+  
+
+Sub DeleteAllChartObjects() 
+
+  
+
+    Dim co As ChartObject 
+
+     
+
+    For Each co In Worksheets("Pivot Table").ChartObjects 
+
+        co.Delete 
+
+    Next co 
+
+     
+
+End Sub 
